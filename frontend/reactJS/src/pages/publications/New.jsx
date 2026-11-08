@@ -291,9 +291,10 @@ function New() {
         <div>
             <BarreHaut />
             <SidebarPublication />
-            <div className="ml-64 mt-16">
+            {/* Marge droite : place réservée au panneau de prévisualisation (1/3 de l'écran) */}
+            <div className="ml-64 mr-[33.333%] mt-16">
                 <div className="min-h-screen flex bg-gray-100 overflow-hidden">
-                    <div className="h-screen bg-gray-100 overflow-y-auto p-6">
+                    <div className="flex-1 h-screen bg-gray-100 overflow-y-auto p-6">
                         <SelectCompte networks={networks} setNetworks={setNetworks} setInfoComptes={setInfoComptes} />
 
                         <div className="mb-4">
@@ -378,7 +379,7 @@ function New() {
                         </select>
                         <button
                             onClick={handlePublish}
-                            className="mt-50 ml-40 bg-[#FF0035] hover:bg-red-700 text-white py-2 px-6 rounded-lg shadow"
+                            className="ml-4 bg-[#FF0035] hover:bg-red-700 text-white py-2 px-6 rounded-lg shadow"
                         >
                             Publier
                         </button>

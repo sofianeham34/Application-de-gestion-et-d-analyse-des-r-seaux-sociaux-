@@ -4,15 +4,16 @@ const axios = require("axios");
 const socialAuthController = {
     save: async (req, res) => {
         try {
-            // Récupération des données du corps de la requête
-            let {user_id}  = req.body;
-            let {network} = req.body.urlParams;
+            // L'utilisateur vient du JWT (et non du corps de la requête)
+            const user_id = req.user.id;
+            const {network} = req.body.urlParams || {};
+            if (!["facebook", "instagram", "twitter"].includes(network) || !req.body.urlParams.token) {
+                return res.status(400).json({message: "Paramètres de connexion invalides."});
+            }
             // Vérification si un enregistrement de connexion sociale existe déjà
             let socialAuth = await SocialAuth.findOne({ $and: [{ user: user_id }, { provider: network }] });
 
             if (socialAuth) {
-                // Si l'enregistrement existe déjà, retourne un message
-                console.log("socialAuth déjà existant", socialAuth);
                 return res.status(400).json({
                     message: "Cet utilisateur est déjà connecté à ce réseau social."
                 });
@@ -111,7 +112,7 @@ const socialAuthController = {
                             id: profile.id,
                             username: profile.name,
                             email: profile.email || null,
-                            photo: profile.picture.data.url || null,
+                            photo: profile.picture?.data?.url || null,
                         },
                     });
                     break;
@@ -150,11 +151,10 @@ const socialAuthController = {
                 // Sauvegarde de l'objet dans la base de données
                 await socialAuth.save();
 
-                // Réponse de succès
-                console.log("socialAuth sauvegardé avec succès", socialAuth);
+                // Les tokens ne sont jamais renvoyés au navigateur
                 return res.status(201).json({
                     message: "Connexion au réseau social réussie.",
-                    socialAuth
+                    socialAuth: {provider: socialAuth.provider, profile: socialAuth.profile}
                 });
 
 
@@ -163,32 +163,29 @@ const socialAuthController = {
         // Gestion des erreurs et envoi d'une réponse appropriée
         console.error("Erreur lors de la sauvegarde de SocialAuth:", error);
         return res.status(500).json({
-            message: "Une erreur est survenue lors de la sauvegarde de la connexion au réseau social.",
-            error: error.message
+            message: "Une erreur est survenue lors de la sauvegarde de la connexion au réseau social."
         });
     }},
 
+    // Réseaux connectés d'un utilisateur, sans aucun token (pour l'affichage)
     getSocialMediaProviderByUserId : async (req, res) => {
         try {
-            const socialAuth = await SocialAuth.find({user: req.params.user_id}).select('provider profile pages');
-            if (!socialAuth) {
-                return res.status(404).json({})
-            }
+            const socialAuth = await SocialAuth.find({user: req.params.user_id}).select("provider profile pages.name pages.id");
             res.status(200).json(socialAuth);
         } catch (err){
-            console.log(err)
+            console.error(err);
+            res.status(500).json({error: "Erreur serveur"});
         }
     },
 
+    // Tokens complets : réservé aux appels entre microservices
     getSocialMediaByUserId : async (req, res) => {
         try {
             const socialAuth = await SocialAuth.find({user: req.params.user_id});
-            if (!socialAuth) {
-                return res.status(404).json({})
-            }
             res.status(200).json(socialAuth);
         } catch (err){
-            console.log(err)
+            console.error(err);
+            res.status(500).json({error: "Erreur serveur"});
         }
     },
 
@@ -205,7 +202,7 @@ const socialAuthController = {
 
             res.status(200).json({ message: "Connexion supprimée" });
         } catch (err) {
-            console.log(err);
+            console.error(err);
             res.status(500).json({ error: 'Erreur serveur' });
         }
     }

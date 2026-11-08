@@ -1,7 +1,7 @@
 // Fichier : StatistiquesAvancees.jsx
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../utils/axios.jsx";
 import {
   LineChart, Line, PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -32,10 +32,9 @@ const StatistiquesAvancees = () => {
   useEffect(() => {
     const fetchData = async () => {
       const userId = localStorage.getItem("user_id");
-      const proxy = import.meta.env.VITE_PROXY_GATEWAY;
       const [igRes, fbRes] = await Promise.all([
-        axios.get(`${proxy}/api/posts/instagram/posts/${userId}`),
-        axios.get(`${proxy}/api/posts/facebook/posts/${userId}`)
+        axiosInstance.get(`/api/posts/instagram/posts/${userId}`),
+        axiosInstance.get(`/api/posts/facebook/posts/${userId}`)
       ]);
       setData({ instagram: igRes.data || [], facebook: fbRes.data || [] });
     };

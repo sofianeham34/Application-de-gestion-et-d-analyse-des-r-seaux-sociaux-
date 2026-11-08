@@ -1,97 +1,125 @@
-# <img src="frontend/reactJS/public/favicon.png" width="40" height="40" alt="Ascendia Logo"> Ascendia
+# <img src="frontend/reactJS/public/favicon.png" width="36" height="36" alt=""> Ascendia
 
-> **Optimisez votre présence digitale avec l'intelligence artificielle.**
+> **Gérez, planifiez et analysez vos réseaux sociaux au même endroit, avec l'aide de l'IA.**
 
-Ascendia est une plateforme moderne de gestion de réseaux sociaux conçue pour centraliser, planifier et analyser vos contenus sur Facebook, Instagram et Twitter. Grâce à une architecture microservices robuste et une intégration poussée de l'IA, elle offre aux créateurs et aux entreprises un outil puissant pour booster leur engagement.
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-13%20passent-brightgreen)
 
-[![React](https://img.shields.io/badge/Frontend-React%2018-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2F%20Express-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=flat-square&logo=mongodb)](https://www.mongodb.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS%204-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![Docker](https://img.shields.io/badge/DevOps-Docker-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
+Ascendia centralise les comptes **Facebook, Instagram et X (Twitter)** d'un utilisateur : rédaction et publication
+multi-réseaux, planification dans un calendrier, statistiques d'engagement et assistance IA (correction,
+traduction, analyse du sentiment des commentaires, recommandation du jour).
 
----
+![Page d'accueil](docs/screenshots/accueil.jpg)
 
-## ✨ Fonctionnalités Clés
+## Aperçu
 
-- 📱 **Multi-plateforme** : Connectez et gérez vos comptes Facebook, Instagram et Twitter/X.
-- 📅 **Calendrier Interactif** : Planifiez vos publications avec une vue hebdomadaire et mensuelle intuitive (FullCalendar).
-- 🧠 **IA Intégrée** (OpenRouter) :
-  - **Traduction intelligente** : Adaptez vos messages pour une audience globale.
-  - **Correction & Optimisation** : Améliorez le ton et l'engagement de vos textes.
-  - **Analyse de Sentiment** : Comprenez l'humeur de votre communauté via l'analyse des commentaires.
-- 📊 **Analytics Avancés** : Visualisez vos performances avec des graphiques dynamiques (Recharts).
-- 🛡️ **Sécurité** : Authentification sécurisée via JWT et OAuth (Passport.js).
+| Tableau de bord | Calendrier de planification |
+| --- | --- |
+| ![Tableau de bord](docs/screenshots/tableau-de-bord.jpg) | ![Calendrier](docs/screenshots/calendrier.jpg) |
+| **Nouvelle publication** (modèles, correction et traduction IA) | **Statistiques** |
+| ![Nouvelle publication](docs/screenshots/nouvelle-publication.jpg) | ![Statistiques](docs/screenshots/statistiques.jpg) |
 
----
+## Fonctionnalités
 
-## 🛠️ Stack Technique
+- **Connexion des réseaux** Facebook (pages), Instagram et X via OAuth
+- **Publication** immédiate sur plusieurs réseaux à la fois, avec image, et un résultat par réseau
+- **Planification** : les posts sont publiés automatiquement à l'heure choisie (tâche planifiée côté serveur), et affichés dans un calendrier
+- **Statistiques** : j'aime, commentaires, engagement par mois, meilleure publication, détail par publication
+- **IA** (OpenRouter) :
+  - correction et traduction des messages avant publication ;
+  - score de satisfaction calculé à partir des commentaires reçus ;
+  - recommandation quotidienne personnalisée à partir de l'historique de publications
 
-### **Frontend**
-- **Framework** : React 18 avec Vite
-- **Gestion d'état & Routage** : React Router 7
-- **Styling** : Tailwind CSS 4 & Framer Motion (animations)
-- **Composants UI** : Lucide React, HeroIcons
+## Architecture
 
-### **Backend (Microservices)**
-- **Runtime** : Node.js & Express
-- **Services** :
-  - `Gateway` : Point d'entrée unique de l'API.
-  - `Users` : Gestion des profils et de l'authentification.
-  - `Posts` : Gestion des publications et de la logique IA.
-  - `SocialAuth` : Gestion des tokens OAuth et connexions réseaux sociaux.
-- **Base de données** : MongoDB avec Mongoose
-- **IA** : DeepSeek-V3 & GPT-3.5 via OpenRouter
+```
+                         ┌──────────────┐
+  Navigateur (React) ──► │   Gateway    │  point d'entrée unique /api
+                         └──────┬───────┘
+          ┌─────────────────────┼──────────────────────┐
+          ▼                     ▼                      ▼
+   ┌─────────────┐      ┌───────────────┐      ┌───────────────┐
+   │    users    │      │  socialAuth   │◄─────│     posts     │
+   │ comptes,JWT │      │ OAuth, tokens │ clé  │ publication,  │
+   └──────┬──────┘      └───────┬───────┘interne│ stats, IA,    │
+          │                     │              │ tâches cron   │
+          └──────────── MongoDB ┴──────────────┴───────────────┘
+```
 
----
+| Service | Rôle |
+| --- | --- |
+| `gateway` | Proxy vers les microservices ; bloque les routes internes |
+| `users` | Inscription, connexion (bcrypt + JWT), profil |
+| `socialAuth` | Connexion OAuth aux réseaux, stockage des tokens |
+| `posts` | Publication multi-réseaux, planification (cron), statistiques, fonctions IA |
+| `frontend` | Application React (Vite, Tailwind CSS, Recharts, FullCalendar) |
 
-## 🚀 Installation rapide
+Les tokens des réseaux sociaux **ne quittent jamais le backend** : le service `posts` les obtient auprès de
+`socialAuth` par un appel de service à service protégé par une clé interne.
 
-### 1. Pré-requis
-- Node.js (v18+)
-- Docker & Docker Compose
-- Clés API (Facebook/Instagram Developer, Twitter API, OpenRouter)
+## Lancer le projet
 
-### 2. Clonage et configuration
+### Avec Docker (recommandé)
+
 ```bash
-git clone https://github.com/votre-username/ascendia.git
-cd ascendia
+git clone https://github.com/sofianeham34/Application-de-gestion-et-d-analyse-des-r-seaux-sociaux-.git ascendia
+cd ascendia/backend
+cp .env.example .env        # renseigner au minimum JWT_SECRET et INTERNAL_API_KEY
+docker compose up --build
 ```
 
-### 3. Lancement des services
-L'architecture utilise Docker pour simplifier le déploiement.
+L'application est disponible sur **http://localhost:8080**.
+
+### Sans Docker
+
+Prérequis : Node.js 20+ et MongoDB en local.
 
 ```bash
-# Lancer la base de données et les services principaux
-cd backend
-docker-compose up -d
-
-# Lancer le frontend
-cd ../frontend/reactJS
-npm install
-npm run dev
+npm run install:all                     # installe chaque service
+cp backend/.env.example backend/.env    # même fichier pour tous les services
+npm run dev                             # 4 services + frontend sur http://localhost:5173
 ```
 
----
+### Clés API
 
-## 🏗️ Architecture du Projet
+Toutes les intégrations utilisent des offres **gratuites** :
 
-```text
-ascendia/
-├── backend/            # Microservices (Node.js/Express)
-│   ├── gateway/        # API Gateway
-│   ├── services/       # Services spécialisés (Users, Posts, SocialAuth)
-│   └── docker-compose.yml  # Orchestration des conteneurs
-├── frontend/           # Application React (Vite/Tailwind)
+| Variable | Où l'obtenir |
+| --- | --- |
+| `CLE_API_IA` | [OpenRouter](https://openrouter.ai/keys), modèle gratuit par défaut |
+| `FACEBOOK_CLIENT_ID/SECRET`, `INSTAGRAM_CLIENT_ID/SECRET` | [Meta for Developers](https://developers.facebook.com/) |
+| `TWITTER_KEY/SECRET` | [X Developer Portal](https://developer.x.com/), offre Free (publication de tweets) |
 
+Sans clé, l'application fonctionne quand même : un réseau non configuré est simplement désactivé
+(comptes, planification, calendrier et interface restent utilisables).
+
+## Tests
+
+```bash
+npm install && npm test
 ```
 
----
+13 tests d'intégration (`node:test`, base MongoDB en mémoire) lancent les microservices et vérifient le
+contrôle d'accès :
+- connexion par email ou pseudo, sans révéler quels comptes existent ;
+- impossible de se donner le rôle admin ou de modifier le profil d'un autre ;
+- connexions et tokens d'un utilisateur inaccessibles aux autres, route interne non exposée par la gateway ;
+- publications planifiées visibles et supprimables uniquement par leur auteur ;
+- validation des dates et des fichiers envoyés.
 
-## 👥 Équipe
+## Sécurité
 
-Développé par **Sami CHBICHEB**, **Samir EL KHOUMRI**, **Aly HACHEM REDA** et **Sofiane HAMMAR**  dans le cadre de la Licence 3 Informatique.
+- Mots de passe hachés avec **bcrypt**, sessions par **JWT**
+- Chaque route vérifie l'utilisateur connecté et la propriété des ressources
+- Champs modifiables du profil limités (pas de modification du rôle)
+- Tokens OAuth stockés côté serveur uniquement, jamais renvoyés au navigateur
+- En-têtes HTTP sécurisés (Helmet), uploads limités aux images de 8 Mo maximum avec un nom de fichier aléatoire
 
-Ce projet est à usage pédagogique.
+## Équipe
 
----
+Projet de **Licence 3 Informatique** à l'Université de Montpellier, réalisé par **Sami Chbicheb**,
+**Samir El Khoumri**, **Aly Hachem Reda** et **Sofiane Hammar**.

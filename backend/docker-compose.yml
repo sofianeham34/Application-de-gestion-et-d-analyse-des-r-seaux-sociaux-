@@ -1,37 +1,57 @@
-version: '3' 
+# Lance toute l'application : docker compose up --build
+# Les variables sont lues dans backend/.env (voir .env.example).
 services:
   mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    restart: always
-    ports:
-      - "27018:27018"
+    image: mongo:7
+    restart: unless-stopped
     volumes:
       - mongodb_data:/data/db
 
   users:
-    build:
-      context: .
-      dockerfile: services/users/Dockerfile
-    depends_on:
-      - mongodb  # Assure que MongoDB démarre avant users
+    build: ./services/users
+    env_file: .env
     environment:
-      - MONGO_URI=mongodb://mongodb:27018/ # Modifier la connexion
-    volumes:
-      - .:/backend
+      MONGODB_URI: mongodb://mongodb:27017/ascendia
+      PORT_USERS: 3001
+    depends_on: [mongodb]
+
+  socialauth:
+    build: ./services/socialAuth
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/ascendia
+      PORT_SOCIALAUTH: 3002
+    depends_on: [mongodb]
+
+  posts:
+    build: ./services/posts
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/ascendia
+      PORT_POSTS: 3003
+      SOCIALAUTH_URL: http://socialauth:3002
     ports:
-      - "3001:3001"
+      - "3003:3003"
+    depends_on: [mongodb, socialauth]
 
   gateway:
-    build:
-      context: .
-      dockerfile: gateway/Dockerfile
-    depends_on:
-      - users
-    volumes:
-      - .:/backend
+    build: ./gateway
+    env_file: .env
+    environment:
+      PORT_GATEWAY: 3000
+      PROXY_USERS: http://users:3001
+      PROXY_SOCIALAUTH: http://socialauth:3002
+      PROXY_POSTS: http://posts:3003
     ports:
       - "3000:3000"
+    depends_on: [users, socialauth, posts]
+
+  frontend:
+    build:
+      context: ../frontend/reactJS
+    ports:
+      - "8080:80"
+    depends_on: [gateway]
 
 volumes:
   mongodb_data:

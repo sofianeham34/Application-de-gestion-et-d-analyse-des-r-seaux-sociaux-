@@ -17,7 +17,7 @@ function ConfigSocialMedia() {
 
     const handleLinkSocialMedia = async (network) => {
         try {
-            let authUrl = import.meta.env.VITE_PROXY_GATEWAY + `/api/socialauth/connect/${network}`;
+            const authUrl = (import.meta.env.VITE_PROXY_GATEWAY || "") + `/api/socialauth/connect/${network}`;
 
             const width = 600;
             const height = 700;

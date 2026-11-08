@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { axiosInstance } from "../utils/axios.jsx";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -51,14 +50,13 @@ const StatistiquesGlobales = () => {
 
   const fetchData = async () => {
     const userId = localStorage.getItem("user_id");
-    const proxy = import.meta.env.VITE_PROXY_GATEWAY;
     //a modifier possiblement
     //const resfacebookengagement = await axiosInstance.get(`/api/stat/engagement/facebook/${userId}?dateStart=${dateRange.start}&dateEnd=${dateRange.end}`);
     //console.log("le resultat requete facebook stat",resfacebookengagement);
 
     const [igRes, fbRes] = await Promise.all([
-      axios.get(`${proxy}/api/posts/instagram/posts/${userId}`),
-      axios.get(`${proxy}/api/posts/facebook/posts/${userId}`)
+      axiosInstance.get(`/api/posts/instagram/posts/${userId}`),
+      axiosInstance.get(`/api/posts/facebook/posts/${userId}`)
     ]);
 
     let ig = igRes.data || [];

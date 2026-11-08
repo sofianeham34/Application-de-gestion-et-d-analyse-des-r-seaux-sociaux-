@@ -21,3 +21,6 @@
 **/.vscode/
 **/.idea/
 **/.DS_Store
+
+# Images temporaires du service posts
+**/uploads/

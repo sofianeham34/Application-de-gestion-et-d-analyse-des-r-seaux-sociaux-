@@ -17,7 +17,7 @@ export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true); // État de chargement
     const [totalEngagement, setTotalEngagement] = useState(0); // Engagement total
     const [totalPostsThisMonth, setTotalPostsThisMonth] = useState(0);
-    const [sentimentScore,setSentimentScore ] = useState(10);
+    const [sentimentScore, setSentimentScore] = useState(null); // Score IA de 1 à 10 (null = pas de données)
     const [topPost, setTopPost] = useState(null); //post plus performant
 
 
@@ -57,13 +57,16 @@ export default function Dashboard() {
         // Chargement différé : recommandations + engagement
         const loadAdvancedInfos = async () => {
             try {
-                const [recRes, fbRes, igRes,sentiment] = await Promise.all([
+                // Analyse de sentiment (appel IA, plus lent) chargée à part
+                axiosInstance.get(`/api/posts/sentiment/${userId}`)
+                    .then((res) => setSentimentScore(res.data.sentimentScore))
+                    .catch(() => setSentimentScore(null));
+
+                const [recRes, fbRes, igRes] = await Promise.all([
                     axiosInstance.get(`/api/posts/recommandation/${userId}`, { headers }),
                     axiosInstance.get(`/api/posts/facebook/posts/${userId}`, { headers }),
                     axiosInstance.get(`/api/posts/instagram/posts/${userId}`, { headers }),
-                    //axiosInstance.get(`/api/posts/sentiment/${userId}`, { headers }),
                 ]);
-                //setSentimentScore(sentiment.data.score);
                 setRecommandation(recRes.data[0]?.contenu || "");
 
                 const facebookPosts = fbRes.data || [];
@@ -120,10 +123,9 @@ export default function Dashboard() {
             if (!userId) return;
 
             try {
-                const proxy = import.meta.env.VITE_PROXY_GATEWAY;
                 const [igRes, fbRes] = await Promise.all([
-                    axiosInstance.get(`${proxy}/api/posts/instagram/posts/${userId}`),
-                    axiosInstance.get(`${proxy}/api/posts/facebook/posts/${userId}`)
+                    axiosInstance.get(`/api/posts/instagram/posts/${userId}`),
+                    axiosInstance.get(`/api/posts/facebook/posts/${userId}`)
                 ]);
 
                 const igPosts = igRes.data || [];
@@ -219,9 +221,16 @@ export default function Dashboard() {
                             {/* Card “Sentiments des utilisateurs” */}
                             <div className="bg-white rounded-lg shadow p-6">
                                 <h2 className="text-xl font-bold text-gray-700 mb-4">😊 Sentiment des utilisateurs</h2>
-                                <div className="flex justify-center items-center h-48 text-7xl">
-                                    {getSmiley(sentimentScore)}
-                                </div>
+                                {sentimentScore === null ? (
+                                    <p className="text-gray-400 italic">
+                                        Pas encore assez de commentaires pour analyser le sentiment.
+                                    </p>
+                                ) : (
+                                    <div className="flex flex-col justify-center items-center h-48">
+                                        <span className="text-7xl">{getSmiley(sentimentScore)}</span>
+                                        <span className="mt-2 text-gray-500 font-semibold">{sentimentScore} / 10</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Card “Top Post” */}

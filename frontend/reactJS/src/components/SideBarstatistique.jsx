@@ -24,16 +24,6 @@ const SidebarStatisque = () => {
         >
           Analyses Avancées
         </NavLink>
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            `text-[#FF0035] px-4 py-2 rounded-md border-b-4 text-base font-medium ${
-              isActive ? "border-[#FF0035]" : "border-transparent hover:border-[#FF0035]"
-            }`
-          }
-        >
-          Analyses Concurrent
-        </NavLink>
       </div>
     </aside>
   );

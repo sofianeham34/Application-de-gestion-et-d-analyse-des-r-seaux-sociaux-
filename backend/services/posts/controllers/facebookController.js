@@ -1,101 +1,70 @@
 const axios = require("axios");
+const { getProviderTokens } = require("../utils/socialTokens");
 
-//const pageId = process.env.FACEBOOK_PAGE_ID;
-//const accessToken = process.env.FACEBOOK_PAGE_TOKEN;
+const FB_API = "https://graph.facebook.com/v19.0";
+const POST_FIELDS = "id,message,full_picture,created_time,permalink_url,likes.summary(true),comments.summary(true)";
 
-async function getUserPages(accessToken) {
-  const url = `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`;
-  const res = await axios.get(url);
-  return res.data.data; // Liste des pages
-}
-exports.getFacebookPosts = async (req, res) => {
-  console.log(" [CONTROLLER] ➤ GET /api/facebook/posts appelée");
-
-  const id = req.params.id;
-  const response = await axios.get(`${process.env.PROXY_GATEWAY}/api/socialauth/tokens/${id}`);
-  console.log("tokennnnnnnnnnns", response);
-  const tokens = response.data;
-  const facebookTokens = tokens.find(item => item.provider === "facebook");
-                    
-                    if (!facebookTokens) {
-                        return res.status(400).json({ error: "Twitter tokens not found" });
-                    }
-  console.log("mes tokens", tokens);
-
-  const accessToken = facebookTokens.accessToken;
-
-
-
-  const pages = await getUserPages(accessToken);
-  const pageId = pages[0].id;
-  const accessToken_page = pages[0].access_token;
-
-  if (!pageId || !accessToken) {
-    console.error("FACEBOOK_PAGE_ID ou FACEBOOK_PAGE_TOKEN manquant");
-    return res.status(500).json({ error: "Variables d’environnement Facebook manquantes." });
+// Première page Facebook gérée par l'utilisateur connecté (avec son token de page).
+// Sans page connectée, les listes sont simplement vides.
+async function facebookPage(req, res, { emptyList = false } = {}) {
+  const account = await getProviderTokens(req.user.id, "facebook");
+  const page = account?.pages?.[0];
+  if (!page) {
+    if (emptyList) res.json([]);
+    else res.status(400).json({ error: "Aucune page Facebook connectée." });
+    return null;
   }
+  return page;
+}
 
-  console.log(" PAGE ID:", pageId);
-  console.log(" Token partiel:", accessToken.slice(0, 15) + "...");
-
+// Publications de la page
+exports.getFacebookPosts = async (req, res) => {
   try {
-    const response = await axios.get(
-      `https://graph.facebook.com/v19.0/${pageId}/feed`,
-      {
-        params: {
-          access_token: accessToken_page,
-          fields: "id,message,full_picture,created_time,permalink_url,likes.summary(true),comments.summary(true)",
-        },
-      }
-    );
-
-    const posts = response.data.data || [];
-    console.log(`${posts.length} publications Facebook reçues.`);
-    console.log(posts);
-
-    res.json(posts);
+    const page = await facebookPage(req, res, { emptyList: true });
+    if (!page) return;
+    const { data } = await axios.get(`${FB_API}/${page.id}/feed`, {
+      params: { access_token: page.accessToken, fields: POST_FIELDS },
+    });
+    res.json(data.data || []);
   } catch (error) {
-    console.error(" Erreur lors de l'appel à Facebook Graph API :");
-    console.error(error.response?.data || error.message);
+    console.error("Erreur Facebook (publications) :", error.response?.data || error.message);
     res.status(500).json({ error: "Erreur lors de la récupération des publications Facebook." });
   }
 };
 
-  exports.getFacebookPostById = async (req, res) => {
-    const { id } = req.params;
-    const accessToken = process.env.INSTATOKEN;
-  
-    try {
-      const response = await axios.get(`https://graph.facebook.com/v19.0/${id}`, {
-        params: {
-          access_token: accessToken,
-          fields: 'id,caption,media_type,media_url,permalink,timestamp,thumbnail_url,like_count,comments_count'
-        }
-      });
-  
-      res.json(response.data);
-    } catch (error) {
-      console.error("Erreur récupération d’un post Instagram :", error.response?.data || error.message);
-      res.status(500).json({ error: "Impossible de récupérer la publication." });
-    }
-  };
-  
-  exports.getFacebookPostComments = async (req, res) => {
-    const { id } = req.params;
-    const accessToken = process.env.INSTATOKEN;
-  
-    try {
-      const response = await axios.get(`https://graph.facebook.com/v19.0/${id}/comments`, {
-        params: {
-          access_token: accessToken,
-          fields: 'id,text,username,like_count,timestamp'
-        }
-      });
-      console.log(response.data);
-      res.json(response.data.data || []);
-    } catch (error) {
-      console.error("Erreur récupération des commentaires :", error.response?.data || error.message);
-      res.status(500).json({ error: "Impossible de récupérer les commentaires." });
-    }
-  };
+// Une publication
+exports.getFacebookPostById = async (req, res) => {
+  try {
+    const page = await facebookPage(req, res);
+    if (!page) return;
+    const { data } = await axios.get(`${FB_API}/${req.params.id}`, {
+      params: { access_token: page.accessToken, fields: POST_FIELDS },
+    });
+    res.json(data);
+  } catch (error) {
+    console.error("Erreur Facebook (publication) :", error.response?.data || error.message);
+    res.status(500).json({ error: "Impossible de récupérer la publication." });
+  }
+};
 
+// Commentaires d'une publication
+exports.getFacebookPostComments = async (req, res) => {
+  try {
+    const page = await facebookPage(req, res);
+    if (!page) return;
+    const { data } = await axios.get(`${FB_API}/${req.params.id}/comments`, {
+      params: { access_token: page.accessToken, fields: "id,message,from,like_count,created_time" },
+    });
+    // Même forme que les commentaires Instagram pour l'affichage
+    res.json((data.data || []).map((c) => ({
+      id: c.id,
+      text: c.message,
+      username: c.from?.name,
+      like_count: c.like_count || 0,
+      timestamp: c.created_time,
+    })));
+  } catch (error) {
+    console.error("Erreur Facebook (commentaires) :", error.response?.data || error.message);
+    res.status(500).json({ error: "Impossible de récupérer les commentaires." });
+  }
+};

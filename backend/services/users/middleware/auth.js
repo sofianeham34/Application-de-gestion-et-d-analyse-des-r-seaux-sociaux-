@@ -15,4 +15,12 @@ const auth = (req, res, next) => {
     }
 };
 
+// À utiliser après auth : réserve la route aux administrateurs.
+auth.requireAdmin = (req, res, next) => {
+    if (req.user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+    next();
+};
+
 module.exports = auth;

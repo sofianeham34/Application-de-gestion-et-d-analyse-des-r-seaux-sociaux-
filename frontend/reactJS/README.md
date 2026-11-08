@@ -8,6 +8,6 @@ Ce dossier contient l'application frontend développée avec React.js. L'applica
 - **public/** : Contient les fichiers statiques accessibles publiquement.
 - **src/** : Contient le code source de l'application React.
 - **vite.config.js** : Fichier de configuration pour Vite.
-- **tailwind.config.js** : Configuration de Tailwind CSS.
+- **nginx.conf / Dockerfile** : image de production (fichiers statiques + proxy /api vers la gateway).
 - **README.md** : Ce fichier.
     

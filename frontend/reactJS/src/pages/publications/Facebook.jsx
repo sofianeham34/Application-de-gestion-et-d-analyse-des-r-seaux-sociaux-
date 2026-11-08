@@ -15,12 +15,7 @@ const Facebook = () => {
     const userId = localStorage.getItem("user_id");
 
     try {
-      const res = await axiosInstance.get(`/api/posts/facebook/posts/${userId}`, {
-        headers: {
-          "Authorization": `Bearer ${sessionStorage.getItem("token")}`,
-          "Content-Type": "application/json"
-        }
-      });
+      const res = await axiosInstance.get(`/api/posts/facebook/posts/${userId}`);
 
       console.log("📘 Publications Facebook reçues :", res.data);
       setPosts(res.data);

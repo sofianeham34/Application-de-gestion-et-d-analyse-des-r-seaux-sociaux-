@@ -20,12 +20,7 @@ const Planification = () => {
             setLoading(true);
 
             // Appel API pour récupérer les publications programmées de l'utilisateur
-            const res = await axiosInstance.get(`/api/posts/scheduled/${localStorage.getItem("user_id")}`, {
-                headers: {
-                    "Authorization": `Bearer ${sessionStorage.getItem("token")}`, // Authentification avec le token de session
-                    "Content-Type": "application/json" // Définition du type de contenu
-                }
-            });
+            const res = await axiosInstance.get(`/api/posts/scheduled/${localStorage.getItem("user_id")}`);
 
             console.log("Publications a venir reçues :", res.data);
 

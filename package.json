@@ -1,10 +1,14 @@
 {
-  "devDependencies": {
-    "tailwindcss": "^4.1.4"
+  "name": "ascendia",
+  "private": true,
+  "description": "Plateforme de gestion de réseaux sociaux assistée par IA (microservices Node.js + React).",
+  "scripts": {
+    "install:all": "npm install && for d in backend/gateway backend/services/users backend/services/socialAuth backend/services/posts frontend/reactJS; do (cd $d && npm install); done",
+    "dev": "concurrently -n gateway,users,socialauth,posts,front -c gray,blue,magenta,green,yellow \"npm run dev --prefix backend/gateway\" \"npm run dev --prefix backend/services/users\" \"npm run dev --prefix backend/services/socialAuth\" \"npm run dev --prefix backend/services/posts\" \"npm run dev --prefix frontend/reactJS\"",
+    "test": "node --test \"backend/tests/*.test.js\""
   },
-  "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "fs": "^0.0.1-security",
-    "luxon": "^3.6.1"
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "mongodb-memory-server": "^11.3.0"
   }
 }

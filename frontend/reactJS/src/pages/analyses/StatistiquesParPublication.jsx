@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../../utils/axios.jsx";
 import { FaHeart, FaCommentDots, FaArrowLeft } from "react-icons/fa";
 
 export default function StatistiqueParPublication() {
@@ -15,7 +15,7 @@ export default function StatistiqueParPublication() {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_PROXY_GATEWAY}/api/posts/${reseau}/post/${postId}`);
+                const res = await axiosInstance.get(`/api/posts/${reseau}/post/${postId}`);
                 setPost(res.data);
             } catch (err) {
                 setError("Erreur lors de la récupération de la publication.");
@@ -24,7 +24,7 @@ export default function StatistiqueParPublication() {
 
         const fetchComments = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_PROXY_GATEWAY}/api/posts/${reseau}/post/${postId}/comments`);
+                const res = await axiosInstance.get(`/api/posts/${reseau}/post/${postId}/comments`);
                 const sorted = res.data.sort((a, b) => {
                     const aLikes = a.like_count || a.reaction_count || 0;
                     const bLikes = b.like_count || b.reaction_count || 0;

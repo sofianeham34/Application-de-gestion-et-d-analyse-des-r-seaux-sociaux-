@@ -47,34 +47,33 @@ const userController = {
                 token
             });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erreur serveur' });
         }
     },
 
     // Connexion
     login: async (req, res) => {
         try {
-            console.log("requete recue")
-            const { email, password } = req.body;
-            // Vérifier si l'utilisateur existe
-            const user = await User.findOne({ email });
-            if (!user) {
-                return res.status(400).json({ message: 'Identifiants invalides' });
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
             }
 
-            // Vérifier le mot de passe
-            const isMatch = await bcrypt.compare(password, user.password);
+            const { email, password } = req.body;
+            // Connexion par email ou par nom d'utilisateur
+            const user = await User.findOne({ $or: [{ email: email.toLowerCase() }, { username: email }] });
+
+            // Même message dans les deux cas pour ne pas révéler quels comptes existent
+            const isMatch = user && user.isActive && await bcrypt.compare(password, user.password);
             if (!isMatch) {
-                return res.status(400).json({ message: 'Mot de passe invalide' });
+                return res.status(400).json({ message: 'Identifiants invalides' });
             }
-            console.log("avant jwt ok")
             // Créer le token JWT
             const token = jwt.sign(
                 { id: user._id, role: user.role },
                 process.env.JWT_SECRET,
                 { expiresIn: '24h' }
             );
-            console.log("token créé")
             const userResponse = user.toObject();
             delete userResponse.password;
             res.json({
@@ -82,7 +81,7 @@ const userController = {
                 token
             });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erreur serveur' });
         }
     },
 
@@ -92,7 +91,7 @@ const userController = {
             const allUser = await User.find().select('-password');
             res.json(allUser);
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erreur serveur' });
         }
     },
 
@@ -112,7 +111,7 @@ const userController = {
             res.json(user);
               
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erreur serveur' });
         }
     },
 
@@ -124,7 +123,17 @@ const userController = {
                 return res.status(403).json({ message: 'Accès non autorisé' });
             }
 
-            const updates = req.body;
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+
+            // Seuls ces champs sont modifiables : impossible de changer son rôle ou son statut
+            const updates = {};
+            for (const field of ['username', 'email', 'password']) {
+                if (req.body[field] !== undefined) updates[field] = req.body[field];
+            }
+            updates.updatedAt = Date.now();
 
             // Si le mot de passe est mis à jour, le hasher
             if (updates.password) {
@@ -144,7 +153,10 @@ const userController = {
 
             res.json(user);
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            if (error.code === 11000) {
+                return res.status(400).json({ message: 'Ce nom d\'utilisateur ou cet email est déjà utilisé' });
+            }
+            res.status(400).json({ error: 'Mise à jour impossible' });
         }
     },
 
@@ -162,7 +174,7 @@ const userController = {
 
             res.json({ message: 'Utilisateur supprimé avec succès' });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erreur serveur' });
         }
     }
 };

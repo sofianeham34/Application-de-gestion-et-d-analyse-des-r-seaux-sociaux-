@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { axiosInstance } from "../../utils/axios.jsx";
 import { FaHeart, FaCommentDots, FaPlus, FaArrowLeft } from "react-icons/fa";
 import BarreHaut from "../../components/BarreHaut";
 import SidebarPublication from "../../components/SideBarPublication";
@@ -13,18 +13,18 @@ const Instagram = () => {
   const navigate = useNavigate();
 
   const fetchInstagramPosts = async () => {
-    const API_URL = `${import.meta.env.VITE_PROXY_GATEWAY}/api/posts/instagram/posts/${localStorage.getItem("user_id")}`;
+    const API_URL = `/api/posts/instagram/posts/${localStorage.getItem("user_id")}`;
     console.log("📡 Requête envoyée à :", API_URL);
 
     try {
-      const res = await axios.get(API_URL);
+      const res = await axiosInstance.get(API_URL);
       const basePosts = res.data;
 
       const postsWithViews = await Promise.all(
         basePosts.map(async (post) => {
           try {
-            const insightsUrl = `${import.meta.env.VITE_PROXY_GATEWAY}/api/posts/instagram/posts/${post.id}/insights`;
-            const insightsRes = await axios.get(insightsUrl);
+            const insightsUrl = `/api/posts/instagram/posts/${post.id}/insights`;
+            const insightsRes = await axiosInstance.get(insightsUrl);
             const views = insightsRes.data?.video_views || 0;
             return { ...post, views };
           } catch (err) {
@@ -44,11 +44,11 @@ const Instagram = () => {
   };
 
   const fetchInstagramStories = async () => {
-    const API_URL = `${import.meta.env.VITE_PROXY_GATEWAY}/api/posts/instagram/stories`;
+    const API_URL = `/api/posts/instagram/stories`;
     console.log("📡 Requête stories envoyée à :", API_URL);
 
     try {
-      const res = await axios.get(API_URL);
+      const res = await axiosInstance.get(API_URL);
       const now = new Date();
 
       // Filtrer uniquement les stories < 24h

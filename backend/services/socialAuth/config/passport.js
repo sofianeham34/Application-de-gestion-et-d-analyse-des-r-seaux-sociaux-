@@ -2,51 +2,52 @@ const passport = require("passport");
 const FacebookStrategy = require("passport-facebook").Strategy;
 const TwitterStrategy = require("passport-twitter").Strategy;
 const InstagramStrategy = require("passport-instagram").Strategy;
-//const SocialAuth = require("../models/SocialAuth");
 
+const callbackUrl = (network) => `${process.env.PROXY_GATEWAY}/api/socialauth/connect/${network}/callback`;
 
-passport.use(
-    new FacebookStrategy(
+// Réseaux dont les clés API sont configurées. Un réseau sans clé est
+// simplement désactivé, au lieu d'empêcher le service de démarrer.
+const enabled = {
+    facebook: Boolean(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET),
+    instagram: Boolean(process.env.INSTAGRAM_CLIENT_ID && process.env.INSTAGRAM_CLIENT_SECRET),
+    twitter: Boolean(process.env.TWITTER_KEY && process.env.TWITTER_SECRET),
+};
+
+if (enabled.facebook) {
+    passport.use(new FacebookStrategy(
         {
             clientID: process.env.FACEBOOK_CLIENT_ID,
             clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-            callbackURL: process.env.PROXY_GATEWAY + "/api/socialauth/connect/facebook/callback",
+            callbackURL: callbackUrl("facebook"),
             passReqToCallback: true,
-            session: false,
             profileFields: ["id", "displayName", "email", "photos"]
         },
-        (req, accessToken, refreshToken, profile, done) => {
-            console.log("Access Token Facebook :", accessToken);
-            return done(null, { profile, accessToken });
-        }
-    )
-);
-
-passport.use(
-    new InstagramStrategy(
-        {
-            clientID: process.env.INSTAGRAM_CLIENT_ID, // Utilisez l'ID client Instagram
-            clientSecret: process.env.INSTAGRAM_CLIENT_SECRET, // Utilisez le secret client Instagram
-            callbackURL: process.env.PROXY_GATEWAY + "/api/socialauth/connect/instagram/callback",
-            passReqToCallback: true,
-            session: false,
-            scope:["instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights"]
-        },
-        (req, accessToken, refreshToken, profile, done) => {
-            console.log("Access Token Instagram:", accessToken);
-            return done(null, { profile, accessToken });
-        }
-    )
-);
-passport.use(
-    new TwitterStrategy({
-        consumerKey: process.env.TWITTER_KEY,
-        consumerSecret: process.env.TWITTER_SECRET,
-        callbackURL: process.env.PROXY_GATEWAY + "/api/socialauth/connect/twitter/callback"
-    },
-    (token, tokenSecret, profile, done) =>{
-        return done(null, {token,tokenSecret,profile});
+        (req, accessToken, refreshToken, profile, done) => done(null, { profile, accessToken })
+    ));
 }
-));
 
+if (enabled.instagram) {
+    passport.use(new InstagramStrategy(
+        {
+            clientID: process.env.INSTAGRAM_CLIENT_ID,
+            clientSecret: process.env.INSTAGRAM_CLIENT_SECRET,
+            callbackURL: callbackUrl("instagram"),
+            passReqToCallback: true,
+            scope: ["instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights"]
+        },
+        (req, accessToken, refreshToken, profile, done) => done(null, { profile, accessToken })
+    ));
+}
 
+if (enabled.twitter) {
+    passport.use(new TwitterStrategy(
+        {
+            consumerKey: process.env.TWITTER_KEY,
+            consumerSecret: process.env.TWITTER_SECRET,
+            callbackURL: callbackUrl("twitter")
+        },
+        (token, tokenSecret, profile, done) => done(null, { token, tokenSecret, profile })
+    ));
+}
+
+module.exports = { enabled };
