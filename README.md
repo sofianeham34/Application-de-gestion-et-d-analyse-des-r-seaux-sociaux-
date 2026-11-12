@@ -86,13 +86,11 @@ npm run dev                             # 4 services + frontend sur http://local
 
 ### Clés API
 
-Toutes les intégrations utilisent des offres **gratuites** :
-
 | Variable | Où l'obtenir |
 | --- | --- |
-| `CLE_API_IA` | [OpenRouter](https://openrouter.ai/keys), modèle gratuit par défaut |
+| `CLE_API_IA` | [OpenRouter](https://openrouter.ai/keys) |
 | `FACEBOOK_CLIENT_ID/SECRET`, `INSTAGRAM_CLIENT_ID/SECRET` | [Meta for Developers](https://developers.facebook.com/) |
-| `TWITTER_KEY/SECRET` | [X Developer Portal](https://developer.x.com/), offre Free (publication de tweets) |
+| `TWITTER_KEY/SECRET` | [X Developer Portal](https://developer.x.com/) |
 
 Sans clé, l'application fonctionne quand même : un réseau non configuré est simplement désactivé
 (comptes, planification, calendrier et interface restent utilisables).

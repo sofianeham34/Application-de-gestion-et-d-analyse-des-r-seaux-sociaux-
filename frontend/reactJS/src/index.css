@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source(".");
 
 /* Valeurs par défaut de Tailwind v3 conservées (bordures grises, curseur des boutons) */
 @layer base {
